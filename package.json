@@ -1,0 +1,12 @@
+{
+  "name": "fps-training-game",
+  "version": "1.0.0",
+  "description": "A simple FPS training game for mouse and WASD movement using Three.js.",
+  "main": "public/index.html",
+  "scripts": {
+    "start": "npx serve public"
+  },
+  "dependencies": {
+    "three": "^0.157.0"
+  }
+}
