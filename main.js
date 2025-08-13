@@ -1,6 +1,7 @@
 
 // --- FPS Training Game with Standard Controls ---
 
+
 let camera, scene, renderer;
 let move = { forward: false, backward: false, left: false, right: false };
 let velocity = new THREE.Vector3();
@@ -12,15 +13,10 @@ let collectedCount = 0;
 let target = null;
 let raycaster = new THREE.Raycaster();
 let score = 0;
+let gameOver = false;
 
-
-// Wait for textures to load before initializing scene
-window.addEventListener('load', () => {
-  setTimeout(() => { // ensure images are loaded
-    init();
-    animate();
-  }, 100);
-});
+init();
+animate();
 
 function init() {
   // Camera
@@ -31,33 +27,10 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x222233);
 
-
-  // Load textures from hidden <img> tags
-  function tex(id, fallbackColor) {
-    const img = document.getElementById(id);
-    if (img && img.complete && img.naturalWidth > 0) {
-      const texture = new THREE.Texture(img);
-      texture.needsUpdate = true;
-      texture.magFilter = THREE.NearestFilter;
-      texture.minFilter = THREE.NearestFilter;
-      return texture;
-    } else {
-      // fallback to color if texture not loaded
-      return null;
-    }
-  }
-
-  // Floor (grass texture)
-  let floorMat;
-  const floorTex = tex('tex-grass');
-  if (floorTex) {
-    floorMat = new THREE.MeshPhongMaterial({ map: floorTex });
-  } else {
-    floorMat = new THREE.MeshPhongMaterial({ color: 0x888888 });
-  }
+  // Floor
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100),
-    floorMat
+    new THREE.MeshPhongMaterial({ color: 0x888888 })
   );
   floor.rotation.x = -Math.PI / 2;
   scene.add(floor);
@@ -78,19 +51,11 @@ function init() {
   lights.forEach(l => scene.add(l));
 
 
-  // Obstacles (randomly use dirt, stone, or wood textures)
-  const boxTexs = [tex('tex-dirt'), tex('tex-stone'), tex('tex-wood')];
+  // Obstacles
   for (let i = 0; i < 10; i++) {
-    let mat;
-    const t = boxTexs[Math.floor(Math.random() * boxTexs.length)];
-    if (t) {
-      mat = new THREE.MeshPhongMaterial({ map: t });
-    } else {
-      mat = new THREE.MeshPhongMaterial({ color: 0x44aa88 });
-    }
     const box = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
-      mat
+      new THREE.MeshPhongMaterial({ color: 0x44aa88 })
     );
     box.position.set(Math.random() * 40 - 20, 0.5, Math.random() * 40 - 20);
     scene.add(box);
@@ -102,6 +67,7 @@ function init() {
   spawnTarget();
 // Spawn a random target (sphere)
 function spawnTarget() {
+  if (gameOver) return;
   if (target) scene.remove(target);
   const geometry = new THREE.SphereGeometry(0.5, 24, 24);
   const material = new THREE.MeshPhongMaterial({ color: 0xff4444 });
@@ -118,7 +84,7 @@ function spawnTarget() {
 }
 // Shoot on left click
 window.addEventListener('mousedown', (e) => {
-  if (!canMove || e.button !== 0) return;
+  if (!canMove || e.button !== 0 || gameOver) return;
   if (!target) return;
   // Only allow shooting if player is close enough
   const dist = camera.position.distanceTo(target.position);
@@ -129,10 +95,17 @@ window.addEventListener('mousedown', (e) => {
   if (intersects.length > 0) {
     // Remove target and spawn a new one
     scene.remove(target);
-    spawnTarget();
     score++;
     const scoreElem = document.getElementById('score');
     if (scoreElem) scoreElem.textContent = score;
+    // Dispatch score update event for timer/milestones
+    window.dispatchEvent(new CustomEvent('scoreUpdate', { detail: score }));
+    if (score >= 100) {
+      gameOver = true;
+      target = null;
+    } else {
+      spawnTarget();
+    }
   }
 });
 
@@ -218,7 +191,7 @@ function animate() {
   const time = performance.now();
   const delta = (time - prevTime) / 1000;
 
-  if (canMove) {
+  if (canMove && !gameOver) {
     // Dampen velocity
     velocity.x -= velocity.x * 10.0 * delta;
     velocity.z -= velocity.z * 10.0 * delta;
@@ -238,7 +211,7 @@ function animate() {
     if (move.left) moveVec.sub(right);
     moveVec.normalize();
 
-  let moveSpeed = 40.0 * delta;
+  let moveSpeed = 60.0 * delta;
   velocity.x += moveVec.x * moveSpeed;
   velocity.z += moveVec.z * moveSpeed;
 

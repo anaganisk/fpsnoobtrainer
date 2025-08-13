@@ -24,7 +24,9 @@
 </head>
 <body>
   <div id="scoreboard" style="position:fixed;top:10px;right:20px;background:rgba(0,0,0,0.7);color:#fff;padding:8px 16px;border-radius:8px;font-size:20px;z-index:1001;font-family:Arial,sans-serif;">
-    Targets Hit: <span id="score">0</span>
+    Targets Hit: <span id="score">0</span><br>
+    <span id="timer">Time: 0.00s</span>
+    <div id="milestones" style="font-size:14px;margin-top:6px;"></div>
   </div>
   <div id="instructions">
     <b>How to Play</b><br><br>
@@ -58,5 +60,75 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
   <script src="main.js"></script>
+  <script>
+    // Timer and milestone display logic
+    let timerInterval = null;
+    let startTime = null;
+    let lastScore = 0;
+    let milestoneTimes = {};
+    const milestones = [10, 25, 50, 100];
+    const timerElem = document.getElementById('timer');
+    const milestonesElem = document.getElementById('milestones');
+
+    function startStopwatch() {
+      if (timerInterval) clearInterval(timerInterval);
+      startTime = performance.now();
+      milestoneTimes = {};
+      lastScore = 0;
+      timerElem.textContent = 'Time: 0.00s';
+      milestonesElem.innerHTML = '';
+      timerInterval = setInterval(updateTimer, 50);
+    }
+
+    function updateTimer() {
+      if (!startTime) return;
+      const now = performance.now();
+      const elapsed = (now - startTime) / 1000;
+      timerElem.textContent = `Time: ${elapsed.toFixed(2)}s`;
+    }
+
+    function recordMilestone(score) {
+      if (!startTime) return;
+      if (milestones.includes(score) && !milestoneTimes[score]) {
+        const now = performance.now();
+        const elapsed = (now - startTime) / 1000;
+        milestoneTimes[score] = elapsed;
+        updateMilestonesDisplay();
+        if (score === 100) {
+          endGame();
+        }
+      }
+    }
+
+    function updateMilestonesDisplay() {
+      let html = '';
+      for (const m of milestones) {
+        if (milestoneTimes[m]) {
+          html += `<div>Reached ${m} hits: <b>${milestoneTimes[m].toFixed(2)}s</b></div>`;
+        }
+      }
+      milestonesElem.innerHTML = html;
+    }
+
+    function endGame() {
+      clearInterval(timerInterval);
+      timerElem.textContent += ' (Game Over!)';
+      document.exitPointerLock();
+      setTimeout(() => {
+        alert('Congratulations! You reached 100 hits!\n\nTimes:\n' +
+          milestones.map(m => `  ${m} hits: ${milestoneTimes[m]?.toFixed(2) || '-'}s`).join('\n'));
+      }, 200);
+    }
+
+    // Listen for score changes from main.js
+    window.addEventListener('scoreUpdate', (e) => {
+      const score = e.detail;
+      if (score === 1) startStopwatch();
+      if (score > lastScore) {
+        recordMilestone(score);
+        lastScore = score;
+      }
+    });
+  </script>
 </body>
 </html>
