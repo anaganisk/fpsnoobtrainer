@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPS Training Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #instructions {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreboard" style="position:fixed;top:10px;right:20px;background:rgba(0,0,0,0.7);color:#fff;padding:8px 16px;border-radius:8px;font-size:20px;z-index:1001;font-family:Arial,sans-serif;">
+    Targets Hit: <span id="score">0</span>
+  </div>
+  <div id="instructions">
+    <b>How to Play</b><br><br>
+    <ul style="margin:0 0 0 18px;padding:0;font-size:16px;">
+      <li><b>Move</b>: WASD keys</li>
+      <li><b>Look</b>: Mouse</li>
+      <li><b>Collect</b>: Walk into star-shaped objects</li>
+      <li><b>Shoot</b>: Left click when crosshair is on a green target (must be close enough)</li>
+      <li><b>Targets</b>: Red = too far, Green = can shoot</li>
+      <li><b>Adjust Mouse Sensitivity</b> below</li>
+      <li><b>Press ESC</b> to unlock mouse and show this card</li>
+    </ul>
+    <br>
+    <label for="sensitivity">Mouse Sensitivity:</label>
+    <input type="range" id="sensitivity" min="0.1" max="2" step="0.01" value="1" style="width:120px;">
+    <span id="sensitivityValue">1.00</span><br>
+    <br>
+    <i>Click anywhere to lock mouse and start playing.</i>
+    <script>
+      // Show slider values live
+      const sens = document.getElementById('sensitivity');
+      const sensVal = document.getElementById('sensitivityValue');
+      sens.addEventListener('input', () => sensVal.textContent = Number(sens.value).toFixed(2));
+    </script>
+  </div>
+  <div id="crosshair" style="position:fixed;left:50vw;top:50vh;transform:translate(-50%,-50%);z-index:1000;pointer-events:none;">
+    <div style="width:24px;height:24px;position:relative;">
+      <div style="position:absolute;left:11px;top:0;width:2px;height:24px;background:#fff;"></div>
+      <div style="position:absolute;top:11px;left:0;width:24px;height:2px;background:#fff;"></div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
